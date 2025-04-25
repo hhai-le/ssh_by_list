@@ -3,10 +3,15 @@ import csv
 import getpass
 import subprocess
 import sys
+import os
+
 
 device_list="devices.csv"
+
 # Get the current user
-current_user = getpass.getuser()
+current_user_full = getpass.getuser()
+username_parts = current_user_full.split('@')
+username_only = username_parts[0]
 
 # Get the keyword to search devices
 if len(sys.argv) < 2:
@@ -35,7 +40,10 @@ for i, (hostname, _) in enumerate(matches, start=1):
 choice = int(input("Choose a device to SSH: ")) - 1
 if 0 <= choice < len(matches):
     ip = matches[choice][1]
-    print(f"Connecting as {current_user} to {ip} ...")
-    subprocess.run(["ssh", f"{current_user}@{ip}"])
+    print(f"Connecting as {username_only} to {ip} ...")
+    if os.name == 'nt':
+        subprocess.run(["ssh", f"{current_user_full}@{ip}"],shell=True)
+    elif os.name == 'posix':
+        subprocess.run(["ssh", f"{username_only}@{ip}"])
 else:
     print("Invalid choice.")
