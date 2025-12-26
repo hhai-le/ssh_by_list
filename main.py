@@ -1,17 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import csv
-import getpass
 import subprocess
 import sys
 import os
 
-
-device_list="devices.csv"
-
-# Get the current user
-current_user_full = getpass.getuser()
-username_parts = current_user_full.split('@')
-username_only = username_parts[0]
+device_list = "./devices.csv"
 
 # Get the keyword to search devices
 if len(sys.argv) < 2:
@@ -38,12 +31,27 @@ for i, (hostname, _) in enumerate(matches, start=1):
 
 # Choose device
 choice = int(input("Choose a device to SSH: ")) - 1
+
 if 0 <= choice < len(matches):
-    ip = matches[choice][1]
-    print(f"Connecting as {username_only} to {ip} ...")
+    hostname, ip = matches[choice]
+
+    # Prompt for username
+    username = input(f"Username for {hostname}: ").strip()
+    if not username:
+        print("Username cannot be empty.")
+        sys.exit(1)
+
+    print(f"Connecting as {username} to {ip} ...")
+
+    # SSH options to bypass host key verification
+    ssh_opts = [
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null"
+    ]
+
     if os.name == 'nt':
-        subprocess.run(["ssh", f"{current_user_full}@{ip}"],shell=True)
+        subprocess.run(["ssh"] + ssh_opts + [f"{username}@{ip}"], shell=True)
     elif os.name == 'posix':
-        subprocess.run(["ssh", f"{username_only}@{ip}"])
+        subprocess.run(["ssh"] + ssh_opts + [f"{username}@{ip}"])
 else:
     print("Invalid choice.")
